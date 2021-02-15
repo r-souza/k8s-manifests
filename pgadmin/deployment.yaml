@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pgadmin-deployment
+spec:
+  selector:
+    matchLabels:
+      app: pgadmin
+  template:
+    metadata:
+      labels:
+        app: pgadmin
+    spec:
+      volumes:
+        - name: pgadmin-pv-storage
+          persistentVolumeClaim:
+            claimName: pgadmin-pvc
+      initContainers:
+        - name: pgadmin-data-permission-fix
+          image: busybox
+          command: ["/bin/chown", "-R", "5050:5050", "/var/lib/pgadmin"]
+          volumeMounts:
+          - mountPath: "/var/lib/pgadmin"
+            name: pgadmin-pv-storage
+      containers:
+      - name: pgadmin
+        image: dpage/pgadmin4
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            memory: "256Mi"
+            cpu: "1000m"
+        ports:
+        - containerPort: 80
+        volumeMounts:
+          - mountPath: "/var/lib/pgadmin"
+            name: pgadmin-pv-storage
+        env:
+          - name: PGADMIN_DEFAULT_EMAIL
+            value: contato@rodrigosouza.eti.br
+          - name: PGADMIN_DEFAULT_PASSWORD
+            value: root
+
